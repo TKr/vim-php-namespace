@@ -145,6 +145,15 @@ function! PhpExpandClass()
     call search('\([[:blank:]]*[[:alnum:]\\_]\)*', 'ceW')
 endfunction
 
+function! PhpGetFullClassName(cur_class)
+    let fqcn = PhpFindFqcn(a:cur_class)
+    if fqcn is 0
+        return
+    else
+        return fqcn
+    endif
+endfunction
+
 function! s:searchCapture(pattern, nr)
     let s:capture = 0
     let str = join(getline(0, line('$')),"\n")
