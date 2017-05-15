@@ -168,11 +168,11 @@ function! PhpExpandClass()
 endfunction
 
 function! PhpGetFullClassName(cur_class)
-    let fqcn = PhpFindFqcn(a:cur_class)
+    let fqcn = PhpFindFqn(a:cur_class)
     if fqcn is 0
         return
     else
-        return fqcn
+        return fqcn[1]
     endif
 endfunction
 
