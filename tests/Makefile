@@ -25,7 +25,7 @@ clean:
 test1.out: test1.in
 	-rm -f $*.failed tiny.vim small.vim mbyte.vim mzscheme.vim test.ok X* viminfo
 	$(VALGRIND) $(VIMPROG) -u unix.vim -U NONE --noplugin -s dotest.in $*.in
-	@/bin/sh -c "if diff -u test.out $*.ok; \
+	@/bin/sh -c "if diff --color='always' -u test.out $*.ok; \
 		then mv -f test.out $*.out; \
 		else echo; \
 		echo test1 FAILED - Something basic is wrong; \
@@ -37,7 +37,7 @@ test1.out: test1.in
 	cp $*.ok test.ok
 	$(VIMPROG) -u unix.vim -U NONE --noplugin -s dotest.in -c "set tags=./$*.fixtures/tags" $*.in
 	@/bin/sh -c "if test -f test.out; then\
-		  if diff -u test.out $*.ok; \
+		  if diff --color='always' -u test.out $*.ok; \
 		  then mv -f test.out $*.out; \
 		  else echo $* FAILED >>test.log; mv -f test.out $*.failed; \
 		  fi \
