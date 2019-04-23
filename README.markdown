@@ -1,7 +1,6 @@
-[![Travis CI Build Status](https://travis-ci.org/iusmac/vim-php-namespace.svg?branch=master)](https://travis-ci.org/iusmac/vim-php-namespace)
-# Goal
-
-vim-php-namespace is a vim plugin for inserting "use" statements automatically.
+# Vim-php-namespace [![Travis CI Build Status](https://travis-ci.org/iusmac/vim-php-namespace.svg?branch=master)](https://travis-ci.org/iusmac/vim-php-namespace)
+## Goal
+Vim-php-namespace is a vim plugin for inserting "use" statements automatically.
 
 ## Features
 
