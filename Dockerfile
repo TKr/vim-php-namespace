@@ -9,7 +9,7 @@ RUN apk --update add $PACKAGES && \
 
 RUN mkdir plugin tests
 ADD plugin plugin
-ADD run-test.sh .
+ADD run-tests.sh .
 ADD tests tests
 
 ENTRYPOINT []
