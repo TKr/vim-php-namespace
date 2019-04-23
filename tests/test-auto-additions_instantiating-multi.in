@@ -1,0 +1,12 @@
+
+Basic test 1
+
+STARTTEST
+:%d
+a<?php
+
+echo new baseClass(new \stdClass, new testNamespaces(staticClass::staticMethod(anotherClass::param)));:call PhpInsertUseInLine()
+:w! test.out
+:qa!
+ENDTEST
+

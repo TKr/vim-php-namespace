@@ -1,0 +1,7 @@
+<?php
+
+use testModel\baseClass;
+use testModel\staticClass;
+use testModel\anotherClass;
+
+echo new baseClass(new \stdClass, new testNamespaces(staticClass::staticMethod(anotherClass::param)));

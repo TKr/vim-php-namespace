@@ -1,0 +1,6 @@
+<?php
+
+use testModel\baseClass;
+use testInterfaces\someInterface;
+
+class testNamespacesClass extends baseClass implements someInterface

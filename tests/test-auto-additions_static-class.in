@@ -1,0 +1,12 @@
+
+Basic test 1
+
+STARTTEST
+:%d
+a<?php
+
+echo anotherClass::param;:call PhpInsertUseInLine()
+:w! test.out
+:qa!
+ENDTEST
+

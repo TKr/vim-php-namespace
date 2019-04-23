@@ -1,0 +1,6 @@
+<?php
+
+use testInterfaces\testInterface;
+
+/**
+* @param null|testInterface $obj

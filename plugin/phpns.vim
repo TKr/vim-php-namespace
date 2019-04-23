@@ -106,23 +106,27 @@ function! PhpFindFqn(name)
     endtry
 endfunction
 
-function! PhpInsertUse()
+function! PhpInsertUse(...)
     exe "normal mz"
-    " move to the first component
-    " Foo\Bar => move to the F
-    call search('[[:alnum:]\\:_]\+', 'bcW')
-    let cur_name = expand("<cword>")
+    if a:0 == 1
+        let cur_name = a:1
+    else
+        " move to the first component
+        " Foo\Bar => move to the F
+        call search('[[:alnum:]\\:_]\+', 'bcW')
+        let cur_name = expand("<cword>")
+    endif
     try
         let search_phrase = substitute(cur_name, "::class", "", "")
         let fqn = PhpFindMatchingUse(search_phrase)
         if fqn isnot 0
             exe "normal! `z"
-            echo "import for " . search_phrase . " already exists"
+            throw "import for " . search_phrase . " already exists"
             return
         endif
         let tfqn = PhpFindFqn(search_phrase)
         if tfqn is 0
-            echo "fully qualified class name was not found"
+            throw "fully qualified class name was not found"
             return
         endif
         if tfqn[0] == 'function'
@@ -167,6 +171,96 @@ function! PhpExpandClass()
     exe restorepos
     " move cursor after fqn
     call search('\([[:blank:]]*[[:alnum:]\\_]\)*', 'ceW')
+endfunction
+
+function! PhpInsertUseInLine()
+    let matches = s:SelectAllMatchesInLine()
+    if len(matches) == 0
+        echohl Error | echomsg "Nothing found" | echohl NONE
+        return 1
+    endif
+
+    "Name storage of "added" and "skipped" classes/interfaces
+    let status = {"added": [], "skipped": []}
+
+    " Cycle through matches
+    for currMatch in matches
+        try
+            call PhpInsertUse(currMatch)
+            call add(status.added, currMatch)
+        catch
+            call add(status.skipped, {'name': currMatch, 'reason': substitute(v:exception, 'Vim(.\+):', '', 'g')})
+        endtry
+    endfor
+    if len(status.added) > 0
+        echomsg "Added \"Use\" for:"
+        for element in status.added
+            echomsg "  ― " . element
+        endfor
+    endif
+    if len(status.skipped) > 0
+        echohl Error | echomsg "Skipped \"Use\" for:" | echohl NONE
+        for element in status.skipped
+            echomsg "  ― " . element.name . " (Reason: " . element.reason .")"
+        endfor
+    endif
+    return 0
+endfunction
+
+function! s:SelectAllMatchesInLine()
+    let phpNames_pattern = '[a-zA-Z_][a-zA-Z0-9_]*'
+    "let phpNamespace_pattern = "[\\_a-zA-Z\x7f-\xff][\\_a-zA-Z0-9\x7f-\xff]*"
+    let funcName_pattern = phpNames_pattern
+    let className_pattern = phpNames_pattern
+    let interfaceName_pattern = phpNames_pattern
+    "let traitName_pattern = phpNames_pattern
+    let typeHints = ["int", "string", "float", "bool", "array", "callable", "iterable", "object", "self"]
+    let typeHints_pattern = join(typeHints, '\|')
+    let currLine = getline(".")
+
+    "[public] function [someMethod|someFunc](Some\Interface $someVar): int {
+    let patternsToMatch = ['function\s\+' . funcName_pattern . '\s*(\s*\(\(?\?\zs\(\%(' . typeHints_pattern . '\)\s\)\@!\)' . interfaceName_pattern  . '\)\+\ze\s\+[&\$]']
+
+    "/** @param [null|]Some\Interface $someVar
+    call add(patternsToMatch, '\* @param \%(null|\)\?\(\zs\(\(\%(mixed\|' . typeHints_pattern . '\)\s\)\@!\)' . className_pattern . '\)\+\ze\s\+\$')
+
+    "$obj = new someClass[()];
+    call add(patternsToMatch, 'new\s\+\zs' . className_pattern . '\ze\s*(\?')
+
+    "return someClass::[someMethod($obj)|someVariable];
+    call add(patternsToMatch, '\zs' . className_pattern . '\ze\s*::\s*' . phpNames_pattern . '\s*(\?')
+
+    " class someClass extends anotherClass {
+    call add(patternsToMatch, 'class\s\+' . className_pattern . '\s\+extends\s\+\zs' . className_pattern . '\ze')
+
+    " class someClass [extends anotherClass] implements someInterface, anotherInterface {
+    if currLine =~ 'class\s\+' . className_pattern . '.\+\simplements\s\+' . interfaceName_pattern
+        call add(patternsToMatch, '\%(\zs' . interfaceName_pattern . '\ze\s*\%($\|{\|,\)\|,\s\+\zs' . interfaceName_pattern . '\ze\)')
+    endif
+
+    " Need to work it out better
+    " class someClass {
+    "     use someTraitInsideClasses;
+    "if currLine =~ '\%(class\s\+'. className_pattern . '\)\@<=\_.\+use\s\+' . traitName_pattern . '\s*\%(,\|;\)'
+    "    call add(patternsToMatch, '\%(\zs' . traitName_pattern . '\ze\s*\%(;\|,\)\|,\s\+\zs' . traitName_pattern . '\ze\)')
+    "endif
+
+    " How many patterns can be applied to the current line?
+    call filter(patternsToMatch, 'currLine =~ v:val')
+
+    let matches = []
+    if len(patternsToMatch) > 0
+        " Get all matches (classes and interfaces)
+        call substitute(currLine, join(patternsToMatch, '\|'), '\=add(matches, submatch(0))', 'g')
+    endif
+    " Remove duplicates
+    let uniqueList = []
+    for m in matches
+        if index(uniqueList, m) == -1
+            call add(uniqueList, m)
+        endif
+    endfor
+    return uniqueList
 endfunction
 
 function! s:searchCapture(pattern, nr)

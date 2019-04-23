@@ -1,0 +1,5 @@
+<?php
+
+use testModel\anotherClass;
+
+echo anotherClass::param;

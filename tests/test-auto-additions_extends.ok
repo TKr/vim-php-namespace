@@ -1,0 +1,5 @@
+<?php
+
+use testModel\baseClass;
+
+class testNamespacesClass extends baseClass
