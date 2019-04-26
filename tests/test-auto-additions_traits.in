@@ -1,0 +1,14 @@
+
+Basic test 1
+
+STARTTEST
+:%d
+a<?php
+
+class Bar
+{
+    use traitExample;:call PhpInsertUseInLine()
+:w! test.out
+:qa!
+ENDTEST
+

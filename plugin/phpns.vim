@@ -8,22 +8,34 @@
 
 let s:capture = 0
 
+let s:phpNames_pattern = '[a-zA-Z_][a-zA-Z0-9_]*'
+let s:funcName_pattern = s:phpNames_pattern
+let s:namespace_pattern = s:phpNames_pattern
+let s:className_pattern = s:phpNames_pattern
+let s:use_pattern = '[a-zA-Z_\\][a-zA-Z0-9_\\]*'
+let s:interfaceName_pattern = s:phpNames_pattern
+let s:traitName_pattern = s:phpNames_pattern
+
 let g:php_namespace_sort = get(g:, 'php_namespace_sort', "'{,'}-1sort i")
 
 let g:php_namespace_sort_after_insert = get(g:, 'php_namespace_sort_after_insert', 0)
 
 function! PhpFindMatchingUse(name)
+    " Fix the case when confusing "use" statements in classes that are traits.
+    " So it will search onyly after "use" statements or "namespace" or "<?php" tag
+    let searchNear = '\%(<?\%(php\)\?\|namespace\_s\+' . s:namespace_pattern . '\_s*[;{]\|use\_s\+\%(\%(function\|const\)\_s\+\)\?' . s:use_pattern  . '\_s*[;,]\)\%(^\|\r\+\|\n\+\)\_s*'
 
     " matches use [function] Foo\Bar as <name>
-    let pattern = '\%(^\|\r\|\n\)\s*use\%(\_s+function\)\?\_s\+\_[^;]\{-}\_s*\(\_[^;,]*\)\_s\+as\_s\+' . a:name . '\_s*[;,]'
-    let fqn = s:searchCapture(pattern, 1)
+    let useWithAs_pattern = searchNear . 'use\%(\_s\+\%(function\|const\)\)\?\_s\+\(' . s:use_pattern . '\)\_s\+as\_s\+' . a:name . '\_s*[;,]'
+    " matches use [function] Foo\<name>
+    let use_pattern = searchNear . 'use\%(\_s\+\%(function\|const\)\)\?\_s\+\(\C' . s:use_pattern  . a:name . '\)\_s*[;,]'
+
+    let fqn = s:searchCapture(useWithAs_pattern, 1)
     if fqn isnot 0
         return fqn
     endif
 
-    " matches use [function] Foo\<name>
-    let pattern = '\%(^\|\r\|\n\)\s*use\%(\_s+function\)\?\_s\+\_[^;]\{-}\_s*\(\_[^;,]*\%(\\\|\_s\)' . a:name . '\)\_s*[;,]'
-    let fqn = s:searchCapture(pattern, 1)
+    let fqn = s:searchCapture(use_pattern, 1)
     if fqn isnot 0
         return fqn
     endif
@@ -135,7 +147,7 @@ function! PhpInsertUse(...)
             let use = "use ".tfqn[1].";"
         endif
         " insert after last use or namespace or <?php
-        if search('^use\_s\%(function\_s\+\)\?\_[[:alnum:][:blank:]\\_]*;', 'be') > 0
+        if search('^use\_s\%(\%(function\|const\)\_s\+\)\?\_[[:alnum:][:blank:]\\_]*;', 'be') > 0
             call append(line('.'), use)
         elseif search('^\s*namespace\_s\_[[:alnum:][:blank:]\\_]*[;{]', 'be') > 0
             call append(line('.'), "")
@@ -208,42 +220,36 @@ function! PhpInsertUseInLine()
 endfunction
 
 function! s:SelectAllMatchesInLine()
-    let phpNames_pattern = '[a-zA-Z_][a-zA-Z0-9_]*'
-    "let phpNamespace_pattern = "[\\_a-zA-Z\x7f-\xff][\\_a-zA-Z0-9\x7f-\xff]*"
-    let funcName_pattern = phpNames_pattern
-    let className_pattern = phpNames_pattern
-    let interfaceName_pattern = phpNames_pattern
-    "let traitName_pattern = phpNames_pattern
     let typeHints = ["int", "string", "float", "bool", "array", "callable", "iterable", "object", "self"]
     let typeHints_pattern = join(typeHints, '\|')
     let currLine = getline(".")
 
     "[public] function [someMethod|someFunc](Some\Interface $someVar): int {
-    let patternsToMatch = ['function\s\+' . funcName_pattern . '\s*(\s*\(\(?\?\zs\(\%(' . typeHints_pattern . '\)\s\)\@!\)' . interfaceName_pattern  . '\)\+\ze\s\+[&\$]']
+    let patternsToMatch = ['function\_s\+' . s:funcName_pattern . '\_s*(\_s*\(\(?\?\zs\(\%(' . typeHints_pattern . '\)\_s\)\@!\)' . s:interfaceName_pattern  . '\)\+\ze\_s\+[&\$]']
 
     "/** @param [null|]Some\Interface $someVar
-    call add(patternsToMatch, '\* @param \%(null|\)\?\(\zs\(\(\%(mixed\|' . typeHints_pattern . '\)\s\)\@!\)' . className_pattern . '\)\+\ze\s\+\$')
+    call add(patternsToMatch, '\* @param \%(null|\)\?\(\zs\(\(\%(mixed\|' . typeHints_pattern . '\)\_s\)\@!\)' . s:className_pattern . '\)\+\ze\_s\+\$')
 
     "$obj = new someClass[()];
-    call add(patternsToMatch, 'new\s\+\zs' . className_pattern . '\ze\s*(\?')
+    call add(patternsToMatch, 'new\_s\+\zs' . s:className_pattern . '\ze\_s*(\?')
 
     "return someClass::[someMethod($obj)|someVariable];
-    call add(patternsToMatch, '\zs' . className_pattern . '\ze\s*::\s*' . phpNames_pattern . '\s*(\?')
+    call add(patternsToMatch, '\zs' . s:className_pattern . '\ze\_s*::\_s*' . s:phpNames_pattern . '\_s*(\?')
 
     " class someClass extends anotherClass {
-    call add(patternsToMatch, 'class\s\+' . className_pattern . '\s\+extends\s\+\zs' . className_pattern . '\ze')
+    call add(patternsToMatch, 'class\_s\+' . s:className_pattern . '\_s\+extends\_s\+\zs' . s:className_pattern . '\ze')
 
     " class someClass [extends anotherClass] implements someInterface, anotherInterface {
-    if currLine =~ 'class\s\+' . className_pattern . '.\+\simplements\s\+' . interfaceName_pattern
-        call add(patternsToMatch, '\%(\zs' . interfaceName_pattern . '\ze\s*\%($\|{\|,\)\|,\s\+\zs' . interfaceName_pattern . '\ze\)')
+    if currLine =~ 'class\_s\+' . s:className_pattern . '.\+\_simplements\_s\+' . s:interfaceName_pattern
+        call add(patternsToMatch, '\%(\zs' . s:interfaceName_pattern . '\ze\_s*\%($\|{\|,\)\|,\_s\+\zs' . s:interfaceName_pattern . '\ze\)')
     endif
 
-    " Need to work it out better
-    " class someClass {
+    " class someClass
+    " {
     "     use someTraitInsideClasses;
-    "if currLine =~ '\%(class\s\+'. className_pattern . '\)\@<=\_.\+use\s\+' . traitName_pattern . '\s*\%(,\|;\)'
-    "    call add(patternsToMatch, '\%(\zs' . traitName_pattern . '\ze\s*\%(;\|,\)\|,\s\+\zs' . traitName_pattern . '\ze\)')
-    "endif
+    if join(getline(0, line("."))) =~ 'class\_s\+'. s:className_pattern . '.\+\_suse\_s\+' . s:traitName_pattern . '\_s*\%(,\|;\|{\)'
+        call add(patternsToMatch, '\%(\zs' . s:traitName_pattern . '\ze\_s*\%(;\|,\|{\)\|,\_s\+\zs' . s:traitName_pattern . '\ze\)')
+    endif
 
     " How many patterns can be applied to the current line?
     call filter(patternsToMatch, 'currLine =~ v:val')
