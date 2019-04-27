@@ -219,13 +219,13 @@ function! PhpInsertUseInLine()
     if len(status.added) > 0
         echomsg "Added \"Use\" for:"
         for element in status.added
-            echomsg "  ― " . element
+            echomsg "  [+] " . element
         endfor
     endif
     if len(status.skipped) > 0
         echohl Error | echomsg "Skipped \"Use\" for:" | echohl NONE
         for element in status.skipped
-            echomsg "  ― " . element.name . " (Reason: " . element.reason .")"
+            echomsg "  [―] " . element.name . " (Reason: " . element.reason .")"
         endfor
     endif
     return 0
