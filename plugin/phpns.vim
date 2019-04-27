@@ -9,10 +9,12 @@
 let s:capture = 0
 
 let s:phpNames_pattern = '[a-zA-Z_][a-zA-Z0-9_]*'
+let s:sub_levels_pattern = '[a-zA-Z_\\][a-zA-Z0-9_\\]*'
+
 let s:funcName_pattern = s:phpNames_pattern
-let s:namespace_pattern = s:phpNames_pattern
+let s:namespace_pattern = s:sub_levels_pattern
 let s:className_pattern = s:phpNames_pattern
-let s:use_pattern = '[a-zA-Z_\\][a-zA-Z0-9_\\]*'
+let s:use_pattern = s:sub_levels_pattern
 let s:interfaceName_pattern = s:phpNames_pattern
 let s:traitName_pattern = s:phpNames_pattern
 
@@ -59,11 +61,19 @@ function! PhpFindFqn(name)
             throw "No tag were found for ".a:name."; is your tag file up to date? Tag files in use: ".join(tagfiles(),',')
         endif
 
+        let index = 0
+        let namespace_list = s:GetNamespaceList()
         " see if some of the matching files are already loaded
         for tag in tags
+            " remove namespaces of classes/interfaces that already exist in this scope
+            let currNS = has_key(tag, 'namespace') ? tag['namespace'] : ''
+            if index(namespace_list, currNS) > -1
+                call remove(tags, index)
+            endif
             if bufexists(tag['filename'])
                 let loadedCount += 1
             endif
+            let index = index + 1
         endfor
 
         exe "ptjump " . a:name
@@ -79,21 +89,22 @@ function! PhpFindFqn(name)
                 call search('\([[:blank:]]*[[:alnum:]\\_]\)*', 'ce')
                 let end = col('.')
                 let ns = strpart(getline(line('.')), start, end-start)
-                return ['class', ns . "\\" . a:name]
-            else
-                return ['class', a:name]
+                if index(namespace_list, ns) == -1
+                    return ['class', ns . "\\" . a:name]
+                endif
             endif
+            throw a:name . " already exists in the current scope of the namespaces (" . ns . ")"
         elseif search('^\s*function\_s\+' . a:name . '\>') > 0
             if search('^\%(<?\%(php\s\+\)\?\)\?\s*namespace\s\+', 'be') > 0
                 let start = col('.')
                 call search('\([[:blank:]]*[[:alnum:]\\_]\)*', 'ce')
                 let end = col('.')
                 let ns = strpart(getline(line('.')), start, end-start)
-                return ['function', ns . "\\" . a:name]
-            else
-                return a:name
+                if index(namespace_list, ns) == -1
+                    return ['function', ns . "\\" . a:name]
+                endif
             endif
-
+            throw a:name . " already exists in the current scope of the namespaces (" . ns . ")"
         else
             throw a:name . ": not found!"
         endif
@@ -141,6 +152,7 @@ function! PhpInsertUse(...)
             throw "fully qualified class name was not found"
             return
         endif
+
         if tfqn[0] == 'function'
             let use = "use function ".tfqn[1].";"
         else
@@ -278,6 +290,13 @@ endfunction
 
 function! s:saveCapture(capture)
     let s:capture = a:capture
+endfunction
+
+function! s:GetNamespaceList()
+    let ns = []
+    let curDoc = join(getline(0, line('$')),"\n")
+    call substitute(curDoc, '\_s*namespace\_s\+\(' . s:namespace_pattern . '\)\_s*[;{]', '\=add(ns, submatch(1))', 'g')
+    return ns
 endfunction
 
 function! PhpSortUse()
