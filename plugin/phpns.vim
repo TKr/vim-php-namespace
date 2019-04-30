@@ -92,8 +92,10 @@ function! PhpFindFqn(name)
                 if index(namespace_list, ns) == -1
                     return ['class', ns . "\\" . a:name]
                 endif
+                throw a:name . " already exists in the current scope of the namespaces (" . ns . ")"
+            else
+                return ['class', a:name]
             endif
-            throw a:name . " already exists in the current scope of the namespaces (" . ns . ")"
         elseif search('^\s*function\_s\+' . a:name . '\>') > 0
             if search('^\%(<?\%(php\s\+\)\?\)\?\s*namespace\s\+', 'be') > 0
                 let start = col('.')
@@ -103,8 +105,10 @@ function! PhpFindFqn(name)
                 if index(namespace_list, ns) == -1
                     return ['function', ns . "\\" . a:name]
                 endif
+                throw a:name . " already exists in the current scope of the namespaces (" . ns . ")"
+            else
+                return a:name
             endif
-            throw a:name . " already exists in the current scope of the namespaces (" . ns . ")"
         else
             throw a:name . ": not found!"
         endif
@@ -219,13 +223,13 @@ function! PhpInsertUseInLine()
     if len(status.added) > 0
         echomsg "Added \"Use\" for:"
         for element in status.added
-            echomsg "  [+] " . element
+            echomsg " [+] " . element
         endfor
     endif
     if len(status.skipped) > 0
         echohl Error | echomsg "Skipped \"Use\" for:" | echohl NONE
         for element in status.skipped
-            echomsg "  [―] " . element.name . " (Reason: " . element.reason .")"
+            echomsg " [―] " . element.name . " (Reason: " . element.reason .")"
         endfor
     endif
     return 0
