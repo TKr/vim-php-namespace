@@ -18,6 +18,9 @@ let s:use_pattern = s:sub_levels_pattern
 let s:interfaceName_pattern = s:phpNames_pattern
 let s:traitName_pattern = s:phpNames_pattern
 
+" This param permit to avoid the addition of the classes / interfaces that already exist in the current scope of namespaces
+let g:php_namespace_avoid_same_scope = get(g:, 'php_namespace_avoid_same_scope', 1)
+
 let g:php_namespace_sort = get(g:, 'php_namespace_sort', "'{,'}-1sort i")
 
 let g:php_namespace_sort_after_insert = get(g:, 'php_namespace_sort_after_insert', 0)
@@ -65,10 +68,11 @@ function! PhpFindFqn(name)
         let namespace_list = s:GetNamespaceList()
         " see if some of the matching files are already loaded
         for tag in tags
-            " remove namespaces of classes/interfaces that already exist in this scope
-            let currNS = has_key(tag, 'namespace') ? tag['namespace'] : ''
-            if index(namespace_list, currNS) > -1
-                call remove(tags, index)
+            if g:php_namespace_avoid_same_scope == 1 
+                let currNS = has_key(tag, 'namespace') ? tag['namespace'] : ''
+                if index(namespace_list, currNS) > -1
+                    call remove(tags, index)
+                endif
             endif
             if bufexists(tag['filename'])
                 let loadedCount += 1
@@ -89,10 +93,14 @@ function! PhpFindFqn(name)
                 call search('\([[:blank:]]*[[:alnum:]\\_]\)*', 'ce')
                 let end = col('.')
                 let ns = strpart(getline(line('.')), start, end-start)
-                if index(namespace_list, ns) == -1
+                if g:php_namespace_avoid_same_scope == 1
+                    if index(namespace_list, ns) == -1
+                        return ['class', ns . "\\" . a:name]
+                    endif
+                    throw a:name . " already exists in the current scope of the namespaces (" . ns . ")"
+                else
                     return ['class', ns . "\\" . a:name]
                 endif
-                throw a:name . " already exists in the current scope of the namespaces (" . ns . ")"
             else
                 return ['class', a:name]
             endif
@@ -102,6 +110,14 @@ function! PhpFindFqn(name)
                 call search('\([[:blank:]]*[[:alnum:]\\_]\)*', 'ce')
                 let end = col('.')
                 let ns = strpart(getline(line('.')), start, end-start)
+                if g:php_namespace_avoid_same_scope == 1
+                    if index(namespace_list, ns) == -1
+                        return ['function', ns . "\\" . a:name]
+                    endif
+                    throw a:name . " already exists in the current scope of the namespaces (" . ns . ")"
+                else
+                    return ['class', ns . "\\" . a:name]
+                endif
                 if index(namespace_list, ns) == -1
                     return ['function', ns . "\\" . a:name]
                 endif
