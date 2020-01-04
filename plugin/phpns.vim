@@ -68,7 +68,7 @@ function! PhpFindFqn(name)
         let namespace_list = s:GetNamespaceList()
         " see if some of the matching files are already loaded
         for tag in tags
-            if g:php_namespace_avoid_same_scope == 1 
+            if g:php_namespace_avoid_same_scope == 1
                 let currNS = has_key(tag, 'namespace') ? tag['namespace'] : ''
                 if index(namespace_list, currNS) > -1
                     call remove(tags, index)
@@ -218,6 +218,8 @@ function! PhpExpandClass()
 endfunction
 
 function! PhpInsertUseInLine()
+    " Save cursor position and many other things.
+    let l:curw=winsaveview()
     let matches = s:SelectAllMatchesInLine()
     if len(matches) == 0
         echohl Error | echomsg "Nothing found" | echohl NONE
@@ -248,6 +250,13 @@ function! PhpInsertUseInLine()
             echomsg " [―] " . element.name . " (Reason: " . element.reason .")"
         endfor
     endif
+    " Adding new elements to the document will move the cursor as well
+    " So we shift it back using the inf of added lines (+1 is for new line)
+    if len(status.added) > 0
+        let l:curw.lnum += len(status.added) + 1
+    endif
+    " Back to saved cursor position
+    call winrestview(l:curw)
     return 0
 endfunction
 
