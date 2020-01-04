@@ -6,6 +6,9 @@
 "
 " This is an adaptation of a script found at http://vim.wikia.com/wiki/Add_Java_import_statements_automatically
 
+let s:save_cpo = &cpo
+set cpo&vim
+
 let s:capture = 0
 
 let s:phpNames_pattern = '[a-zA-Z_][a-zA-Z0-9_]*'
@@ -338,3 +341,6 @@ function! PhpSortUse()
     endif
     exe restorepos
 endfunction
+
+let &cpo = s:save_cpo
+unlet s:save_cpo
