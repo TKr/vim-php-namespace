@@ -1,0 +1,8 @@
+<?php
+
+use testModel\traitExample;
+use testModel\anotherTraitExample;
+
+class Bar
+{
+    use traitExample, anotherTraitExample;

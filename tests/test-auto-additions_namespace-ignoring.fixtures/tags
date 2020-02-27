@@ -1,0 +1,20 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_OUTPUT_MODE	u-ctags	/u-ctags or e-ctags/
+!_TAG_PROGRAM_AUTHOR	Universal Ctags Team	//
+!_TAG_PROGRAM_NAME	Universal Ctags	/Derived from Exuberant Ctags/
+!_TAG_PROGRAM_URL	https://ctags.io/	/official site/
+!_TAG_PROGRAM_VERSION	0.0.0	/9630c392/
+__construct	stubs/test_classes.php	/^    public function __construct(testClass $obj)$/;"	f	class:testModel\\baseClass
+anotherClass	stubs/test_classes.php	/^class anotherClass {$/;"	c	namespace:testModel
+anotherInterface	stubs/test_interfaces.php	/^interface anotherInterface$/;"	i	namespace:testInterfaces
+anotherTraitExample	stubs/test_traits.php	/^trait anotherTraitExample {$/;"	t	namespace:testModel
+baseClass	stubs/test_classes.php	/^class baseClass {$/;"	c	namespace:testModel
+someClass	stubs/test_namespaces.php	/^class someClass$/;"	c	namespace:App
+someInterface	stubs/test_interfaces.php	/^interface someInterface$/;"	i	namespace:testInterfaces
+someMethod	stubs/test_traits.php	/^    private function someMethod(): void {$/;"	f	trait:testModel\\anotherTraitExample	typeref:unknown:void
+someMethod	stubs/test_traits.php	/^    private function someMethod(): void {$/;"	f	trait:testModel\\traitExample	typeref:unknown:void
+someStaticMethod	stubs/test_classes.php	/^    public static function someStaticMethod()$/;"	f	class:testModel\\staticClass
+staticClass	stubs/test_classes.php	/^class staticClass {$/;"	c	namespace:testModel
+testInterface	stubs/test_interfaces.php	/^interface testInterface$/;"	i	namespace:testInterfaces
+traitExample	stubs/test_traits.php	/^trait traitExample {$/;"	t	namespace:testModel

@@ -1,0 +1,12 @@
+
+Basic test 1
+
+STARTTEST
+:%d
+a<?php
+
+class testNamespacesClass implements someInterface, testInterface:call PhpInsertUseInLine()
+:w! test.out
+:qa!
+ENDTEST
+

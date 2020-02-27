@@ -1,0 +1,13 @@
+
+Basic test 1
+
+STARTTEST
+:%d
+a<?php
+
+/**
+* @param null|testInterface $obj:call PhpInsertUseInLine()
+:w! test.out
+:qa!
+ENDTEST
+

@@ -23,9 +23,9 @@ clean:
 	-rm -rf *.out *.failed *.rej *.orig test.log tiny.vim small.vim mbyte.vim mzscheme.vim test.ok X* valgrind.* viminfo
 
 test1.out: test1.in
-	-rm -f $*.failed tiny.vim small.vim mbyte.vim mzscheme.vim test.ok X* viminfo
-	$(VALGRIND) $(VIMPROG) -u unix.vim -U NONE --noplugin -s dotest.in $*.in
-	@/bin/sh -c "if diff -u test.out $*.ok; \
+	-rm -f $*.failed tiny.vim small.vim mbyte.vim mzscheme.vim test.ok X* viminfo debug.log
+	$(VALGRIND) $(VIMPROG) --not-a-term -u unix.vim -V15debug.log -U NONE --noplugin -s dotest.in $*.in
+	@/bin/sh -c "if diff --color='always' -u test.out $*.ok; \
 		then mv -f test.out $*.out; \
 		else echo; \
 		echo test1 FAILED - Something basic is wrong; \
@@ -33,11 +33,11 @@ test1.out: test1.in
 	-rm -rf X* viminfo
 
 .in.out:
-	-rm -rf $*.failed test.ok test.out X* viminfo
+	-rm -rf $*.failed test.ok test.out X* viminfo debug.log
 	cp $*.ok test.ok
-	$(VIMPROG) -u unix.vim -U NONE --noplugin -s dotest.in -c "set tags=./$*.fixtures/tags" $*.in
+	$(VIMPROG) --not-a-term -u unix.vim -U NONE -V15debug.log --noplugin -s dotest.in -c "set tags=./$*.fixtures/tags" $*.in
 	@/bin/sh -c "if test -f test.out; then\
-		  if diff -u test.out $*.ok; \
+		  if diff --color='always' -u test.out $*.ok; \
 		  then mv -f test.out $*.out; \
 		  else echo $* FAILED >>test.log; mv -f test.out $*.failed; \
 		  fi \

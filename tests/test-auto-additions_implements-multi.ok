@@ -1,0 +1,6 @@
+<?php
+
+use testInterfaces\someInterface;
+use testInterfaces\testInterface;
+
+class testNamespacesClass implements someInterface, testInterface
